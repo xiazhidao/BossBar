@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>订台日志</title>
+</head>
+<link rel="stylesheet" href="/static/plugins/layui/css/layui.css"  media="all">
+<body>
+</br>
+</br>
+</br>
+</br>
+</br>
+<div class="layui-input-inline">
+    <a class="layui-btn layui-btn-warm layui-btn-lg" href="/log">刷新页面</a>
+</div>
+<a class="layui-btn layui-btn-checked layui-btn-lg" href="/">返回订台页</a>
+<table class="layui-table">
+    <colgroup>
+        <col width="50">
+        <col width="300">
+        <col width="30">
+        <col width="40">
+        <col width="80">
+    </colgroup>
+    <thead>
+    <tr>
+        {{/*                                            <th>Id</th>*/}}
+        <th>操作类型</th>
+        <th>备注</th>
+        <th>结果</th>
+        <th>操作人</th>
+        <th>时间</th>
+    </tr>
+    </thead>
+    <tbody id = "LogList">
+    {{range .barLogs}}
+        <tr style="color: green">
+            <td style="padding: 0;font-size: 18px;text-align: center;{{if eq .Type "取消"}}color:red{{end}}">{{.Type}}</td>
+            <td style="padding: 0;font-size: 15px;text-align: center">{{.Remark}}</td>
+            {{if eq .Result "失败"}}
+            <td style="padding: 0;font-size: 18px;text-align: center;color: red">{{.Result}}</td>
+            {{else}}
+                <td style="padding: 0;font-size: 18px;text-align: center">{{.Result}}</td>
+            {{end}}
+            <td style="padding: 0;font-size: 18px;text-align: center">{{.OperaterName}}</td>
+            <td style="padding: 0;font-size: 18px;text-align: center">{{.CreateTime.Format "2006-01-02 15:04:05"}}</td>
+        </tr>
+    {{end}}
+
+    </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=3.0, minimum-scale=1.0, user-scalable=yes" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>BOSS订台系统</title>
+	<script type="text/javascript" src="/static/plugins/jquery.min.js"></script>
+	<script type="text/javascript" src="/static/plugins/jquery.maphilight.js"></script>
+	<script type="text/javascript" src="/static/plugins/syalert.js"></script>
+	<script type="text/javascript" src="/static/plugins/layui/layui.all.js"></script>
+	<script type="text/javascript" src="/static/plugins/jquery.md5.js"></script>
+	<link rel="stylesheet" href="/static/plugins/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/static/plugins/css/bootstrap-select.min.css">
+	<script type="text/javascript" src="/static/plugins/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/static/plugins/bootstrap-select.min.js"></script>
+	<script type="text/javascript" src="/static/plugins/i18n/defaults-zh_CN.min.js"></script>
+	<script type="text/javascript" src="/static/jquery-sdajax/jquery.sdajax.js"></script>
+</head>
+<body>
+	<!-- 样式 -->
+	<style type="text/css">
+		* {margin: 0; padding: 0;box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;} html{font-size: 100px;}
+		body{font-family: 'Open Sans', sans-serif, '宋体'; font-size: 0.12rem; color: #333333; font-weight: normal;}
+		a{text-decoration: none; color: #333333;}
+		area{outline: none;}
+		#lbresult{width: 100vw;height: 100vh;text-align: center;}
+		#lbresult img{width: 100vw}
+		div {margin: 0 auto;}
+		.center {text-align: center;}
+		input::placeholder {color: #999; }
+		input:focus {outline:none; }
+		.mb12{margin-bottom: 0.12rem}
+		/*提醒tips样式*/
+		.sy-mask {width: 100%; height: 100%; position: fixed; background: rgba(0, 0, 0, 0.8); left: 0; top: 0; z-index: 1000 }
+		.sy-alert {position: fixed;background: #fff; overflow: hidden; left: 0; right: 0; margin: 0 auto; z-index: 9999;max-width: 500px;}
+		.sy-alert.animated {-webkit-animation-duration: .3s; animation-duration: .3s }
+		.sy-alert .sy-title {height: 0.5rem; color: #333; line-height: 0.5rem; font-size: 0.15rem; }
+		.sy-alert.sy-alert-tips {text-align: center; width: 1.5rem; background: rgba(0, 0, 0, 0.7) }
+		.sy-alert.sy-alert-tips .sy-content {padding: 0.08rem; color: #fff; font-size: 0.14rem }
+		.sy-alert.sy-alert-model {top: calc(50% - 1.5rem);border-radius: 0.04rem}
+		.sy-alert.sy-alert-model .sy-content {text-align: left;padding: 0.1rem;min-height: 2.23rem}
+		.sy-alert.sy-alert-model .sy-content .form .input-item input {display: block; position: relative; border: 0.01rem solid #eee; padding: 0 0.05rem; height: 0.3rem; line-height: 0.28rem;display: inline-block;width: calc(100% - 0.82rem)}
+		.sy-alert.sy-alert-model .sy-content .form .input-item label {height: 0.3rem;line-height: 0.3rem;width: 0.7rem;text-align: right; padding-right: 0.05rem;font-weight: 600;font-size: 0.14rem;display: inline-block;}
+		.sy-alert.sy-alert-model .sy-alert-top {line-height: 0.35rem;border-bottom: 0.01rem solid #ccc}
+		.sy-alert.sy-alert-model .sy-alert-bottom {border-top: 0.01rem solid #ccc;padding: 0.05rem;text-align: center;}
+		.sy-alert .close {width: 0.16rem;height: 0.16rem;line-height:0.16rem;position: absolute; right: 0.08rem; top: 0.08rem;text-align: center;}
+		.zhuantai-content label{font-size: 0.14rem;}
+		.bs-searchbox input[aria-label="Search"] {width: 100% !important;}
+		.btn.dropdown-toggle{background: #e6e6e6}
+		.dropdown-menu .inner {max-height: 1.28rem !important}
+		.biaoji-item {width: 100%}
+	</style>
+	<!-- 内容区 -->
+	<div id="lbresult">
+		<img data-src="{{.imgUrl}}" usemap="#map" id="bgimg" border="0"/>
+		<map id="map" name="map"></map>
+	</div>
+	<div class="sy-alert sy-alert-model" id="dingtai" style="display: none;">
+		<div class="sy-alert-top">
+			<h3 class="center">订台信息</h3>
+			<div class="close">x</div>
+		</div>
+		<div class="sy-content">
+			<form class="form form-horizontal">
+				<div class="normal-content">
+					<div class="input-item mb12">
+						<label>预定台:</label>
+						<input type="text" name="site_name" readonly="readonly" value="">
+						<input type="hidden" name="site_name" value="">
+					</div>
+					<div class="input-item mb12">
+						<label>客户姓名:</label>
+						<input type="text" name="customer_name" value="">
+					</div>
+					<div class="input-item mb12">
+						<label>客户手机:</label>
+						<input type="text" name="customer_phone" value="">
+					</div>
+					<div class="input-item mb12">
+						<label>预定人:</label>
+						<input type="text" name="reserve_name" value="">
+					</div>
+					<div class="input-item">
+						<label>备注:</label>
+						<input type="text" name="remark" value="">
+					</div>
+				</div>
+				<div class="zhuantai-content" style="display: none;">
+					<div class="input-item">
+					    <label>转台：</label>
+                        <select class="selectpicker" name="to_site_name" multiple data-live-search="true">
+						</select>
+					</div>
+				</div>
+				<div class="biaoji-content" style="display: none;">
+					<div class="input-item">
+					    <label>标记：</label>
+						<select name="status" class="selectpicker" title="请选择标记">
+							<option value="2">请选择标记</option>
+							<option value="3">邀请台</option>
+							<option value="4">体验台</option>
+							<option value="5">特惠台</option>
+						</select>
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="sy-alert-bottom">
+			<button class="btn btn-zhuantai btn-info" style="margin-right: 0.16rem;">转台</button>
+			<button class="btn btn-cancel btn-warning" style="margin-right: 0.16rem;">取消</button>
+			<button class="btn btn-success btn-biaoji" style="margin-right: 0.16rem;">标记</button>
+			<button class="btn btn-submit btn-primary">确定</button>
+		</div>
+	</div>
+	<!-- 台型选择 -->
+	<div class="sy-alert sy-alert-model" id="bar-select" style="display:none;">
+		<div class="sy-alert-top">
+			<h3 class="center">台型选择</h3>
+			<div class="close">x</div>
+		</div>
+		<div class="sy-content">
+			<div class="normal-content">
+				<a href="#" class="btn btn-primary btn-block">基础</a>
+				<a href="#" class="btn btn-default btn-block">左上</a>
+				<a href="#" class="btn btn-default btn-block">左边</a>
+				<a href="#" class="btn btn-default btn-block">右上</a>
+				<a href="#" class="btn btn-default btn-block">完整</a>
+			</div>
+		</div>
+	</div>
+	<!-- js代码 -->
+	<script type="text/javascript">
+		//图片加载完成
+		$(function(){
+			var imgw = 375; //图片正常宽度
+			var imgh = 667; //图片正常高度
+			var rate = 1;
+			// var hasValidate  = {};
+			var hasValidate  = {{.pass}};
+			var siteParma = {{.allBars}};
+
+			var exceptForSelect = ['个人信息', '团队管理', '团队订台', '邀请队友', '酒水单', '优惠活动', '订台日记', '后台管理','清台', 'logo'];
+			var color = {
+				'blue': {alwaysOn: true, fillColor:"69ddf8", fillOpacity: 0.3, stroke: true, strokeColor: '69ddf8', strokeOpacity: 1, strokeWidth: 1, fade: true},
+				'yellow': {alwaysOn: true, fillColor:"c2a217", fillOpacity: 0.3, stroke: true, strokeColor: 'c2a217', strokeOpacity: 1, strokeWidth: 1, fade: true},
+				'3': {alwaysOn: true, fillColor:"d9534f", fillOpacity: 0.5, stroke: true, strokeColor: 'd9534f', strokeOpacity: 1, strokeWidth: 1, fade: true}, //标记status 1
+				'4': {alwaysOn: true, fillColor:"3c763d", fillOpacity: 0.5, stroke: true, strokeColor: '3c763d', strokeOpacity: 1, strokeWidth: 1, fade: true}, //标记status 2
+				'5': {alwaysOn: true, fillColor:"f1f1f1", fillOpacity: 0.5, stroke: true, strokeColor: 'f1f1f1', strokeOpacity: 1, strokeWidth: 1, fade: true}, //标记status 3
+			}
+
+			var siteSelected = {
+				'A1': {site_name: 'A1', customer_name: '1234', customer_phone: '13800', reserve_name: '张三', remark: '今晚8点', status: 1},
+				'A2': {site_name: 'A2', customer_name: '1234', customer_phone: '13800', reserve_name: '张三', remark: '今晚8点', status: 2},
+				'A3': {site_name: 'A3', customer_name: '1234', customer_phone: '138001', reserve_name: '张三', remark: '今晚8点', status: 3},
+			};
+			var siteSelected ={{.bars}};
+			var clickobj = null;
+			var setInter = null;
+			var setSelectedInter = null;
+			var selectNameArr = []; //订台多选
+			var selectCancelArr = []; //取消多选
+			var selectedNameArr = []; //转台多选
+			var imgobj = document.getElementById('bgimg');
+			var mapobj = document.getElementById('map');
+			imgobj.src = imgobj.getAttribute('data-src');
+			var layer  =  layui.layer;
+			//图片加载完成触发
+			imgobj.onload = function() {
+				$("#bgimg").maphilight();
+				var width = $('#bgimg').width();
+				$('.sy-alert.sy-alert-model').css({width: width-40});
+				initMap();
+				//初始化图框
+				$("#map area.selected").each(function(){
+					var status = $(this).attr('data-status');
+					if (typeof color[status] === 'undefined') {
+						var name = $(this).attr('data-site_name');
+						var heightlinedata = color[siteParma[name].class];
+					} else {
+						var heightlinedata = color[status];
+					}
+					$(this).data('maphilight', heightlinedata).trigger('alwaysOn.maphilight');
+				});
+				//吧台点击事件
+				$("#map area").on('click', function(event){
+					event.stopPropagation();
+					if ($('.sy-alert.sy-alert-model').is(':visible')) {
+						return false;
+					}
+					clickobj = $(this);
+					var site_name = $(this).attr('data-site_name');
+					if (!hasValidate) {
+						$('.btn-submit').attr('disabled', true);
+					}
+					if (site_name != "清台"){
+						var except = ['个人信息', '团队管理', '团队订台', '邀请队友', '酒水单', '优惠活动', '订台日记', '后台管理', 'logo'];
+						if ($.inArray(site_name, except) >= 0) { //上述功能点击事件
+							if (site_name === "订台日记") {
+								window.location.href="/log"
+							} else if (site_name === 'logo') {
+								if (hasValidate === false) {
+									layer.prompt({
+										formType:1,
+										title: '请输入密码',
+									}, function(val, index){
+										var dataPwd = {"pwd":$.md5(val)};
+										$.sdpost("/login",JSON.stringify(dataPwd), function (re) {
+											if (re.code === 200) {
+												layer.close(index)
+												hasValidate = true
+												//选择切换图片
+											    changeType()
+											}else {
+												layer.alert(re.msg, {icon: 2, title: "失败"});
+												return false;
+											}
+										});
+									})
+								}else {
+									changeType()
+								}
+							}
+						} else {
+							if ($(this).hasClass('selected')) { //查看|转台|取消已订台
+								if (selectNameArr.length > 0) {
+									syalerttips('已有未订台选中, 不能同时选中已订台');
+									return false;
+								}
+
+								$('.btn-zhuantai, .btn-cancel, .btn-biaoji').attr('disabled', false);
+								//复制
+								selectCancelArr = selectedNameArr
+								if (!initZhuantaiClick(site_name)) {
+									return false;
+								}
+							} else { //订台操作
+								if (selectedNameArr.length > 0) {
+									syalerttips('已有订台选中, 不能同时选中未订台');
+									return false;
+								}
+								$('.btn-submit').attr('disabled', false);
+								$('.btn-zhuantai, .btn-cancel, .btn-biaoji').attr('disabled', true);
+								initClick(site_name);
+							}
+						}
+					}else {
+						if (hasValidate === false) {
+							layer.prompt({
+								formType:1,
+								title: '请输入密码',
+							}, function(val, index){
+								var dataPwd = {"pwd":$.md5(val)};
+								$.sdpost("/login",JSON.stringify(dataPwd), function (re) {
+									if (re.code === 200) {
+										layer.close(index)
+										hasValidate = true
+										layer.confirm('确定要一键清台？', {
+											btn: ['确定', '取消'], icon: 3, title: '请确认'
+										}, function () {
+											$.sdpost("/batch","", function (re) {
+												if (re.code === 200) {
+													layer.msg(re.msg, {icon: 1, title: '清台成功'});
+													window.location.href = "/";
+												} else {
+													layer.alert(re.msg, {icon: 2, title: "发起失败"});
+												}
+											});
+										});
+										return false;
+									}else {
+										layer.alert(re.msg, {icon: 2, title: "失败"});
+										return false;
+									}
+								});
+							})
+						}else {
+							layer.confirm('确定要一键清台？', {
+								btn: ['确定', '取消'], icon: 3, title: '请确认'
+							}, function () {
+								$.sdpost("/batch","", function (re) {
+									if (re.code === 200) {
+										layer.msg(re.msg, {icon: 1, title: '清台成功'});
+										window.location.href = "/";
+									} else {
+										layer.alert(re.msg, {icon: 2, title: "发起失败"});
+									}
+								});
+							});
+						}
+					}
+				});
+			}
+
+
+			function changeType() {
+				var type = getParam('type');
+				if (!type) {
+					type = 0;
+				}
+				$('#bar-select a.btn').each(function(index){
+					if (index == type) {
+						$(this).addClass('btn-primary').removeClass('btn-default');
+					} else {
+						$(this).removeClass('btn-primary').addClass('btn-default');
+					}
+					$(this).attr('href', getUrl({type: index}));
+				})
+				$('#bar-select').show();
+			}
+
+			function getParam(name)
+			{
+				var param = {};
+				var paramStr = location.href.split('?')[1];
+				if (paramStr) {
+					paramStr = paramStr.split('&');
+					for(var i=0;i<paramStr.length;i++){
+						var temp = paramStr[i].split('=');
+						param[temp[0]] = temp[1];
+					}
+				}
+				if (name) {
+					return param[name];
+				} else {
+					return param;
+				}
+			}
+			function getUrl(param)
+			{
+				var data = getParam();
+				var host = location.href.split('?')[0];
+				for (var i in param) {
+					data[i] = param[i];
+				}
+				var str = '';
+				for (var i in data) {
+					str += '&'+i+'='+data[i]
+				}
+				str = str.substring(1);
+				return host+'?'+str;
+			}
+			//订台点击初始化事件
+			function initClick(name)
+			{
+				// 判断订台信息
+				if ($('area:not(.selected)[data-site_name="'+name+'"]').length == 0) {
+					syalerttips('订台台信息'+name+'不存在');
+					return false;
+				}
+				var index = $.inArray(name, selectNameArr);
+				if (index >= 0) {
+					selectNameArr.splice(index, 1);
+				} else {
+					selectNameArr.push(name);
+				}
+				initClickHeightLight();
+				if (setInter === null) {
+					setInter = window.setInterval(function() {
+						window.clearInterval(setInter);
+						setInter = null;
+						if (selectNameArr.length > 0) {
+			            	initAlert($(this), {site_name: selectNameArr.join(',')}, $(this).hasClass('selected'));
+						}
+						//用完清空
+						selectNameArr = [];
+			        }, 2000);
+				}
+			}
+			//订台点击吧台高亮
+			function initClickHeightLight()
+			{
+				$('#map area:not(.selected)').each(function(){
+					var name = $(this).attr('title');
+					if ($.inArray(name, selectNameArr) >= 0) {
+						var className = siteParma[name].class;
+						var heightlinedata = color[className];
+					} else {
+						var heightlinedata = {};
+					}
+					$(this).data('maphilight', heightlinedata).trigger('alwaysOn.maphilight');
+				});
+			}
+			//转台点击事件
+			function initZhuantaiClick(name)
+			{
+				// 判断转台信息是否一致
+				if ($('area.selected[data-site_name="'+name+'"]').length == 0) {
+					syalerttips('已定台信息'+name+'不存在');
+					return false;
+				}
+				var index = $.inArray(name, selectedNameArr);
+				if (index >= 0) {
+					selectedNameArr.splice(index, 1);
+				} else {
+					if (selectedNameArr.length > 0) {
+						if ($('area.selected[data-site_name="'+selectedNameArr[0]+'"]').data('customer_phone') != $('area.selected[data-site_name="'+name+'"]').data('customer_phone')) {
+							syalerttips('订台信息不一致');
+							return false;
+						}
+					}
+					selectedNameArr.push(name);
+				}
+				initSelectedClickHeightLight();
+				if (setSelectedInter === null) {
+					setSelectedInter = window.setInterval(function() {
+						window.clearInterval(setSelectedInter);
+						setSelectedInter = null;
+						if (selectedNameArr.length > 0) {
+							var data = $('area.selected[data-site_name="'+selectedNameArr[0]+'"]').data();
+							data.site_name = selectedNameArr.join(',');
+			            	initAlert($(this), data, true);
+						}
+						//用完清空
+						selectedNameArr = [];
+			        }, 2000);
+				}
+			}
+			//已选台颜色高亮
+			function initSelectedClickHeightLight()
+			{
+				$('#map area.selected').each(function(){
+					var name = $(this).attr('title');
+					console.log(name, $.inArray(name, selectedNameArr))
+					var heightlinedata = $(this).data('maphilight') || {};
+					if ($.inArray(name, selectedNameArr) >= 0) {
+						heightlinedata.fillOpacity = '0.8';
+					} else {
+						heightlinedata.fillOpacity = '0.5';
+					}
+					// $(this).data('maphilight', heightlinedata).trigger('alwaysOn.maphilight');
+				});
+			}
+
+			//关闭弹窗按钮
+			$('.close').on('click', function(){
+				$('.sy-alert.sy-alert-model').hide();
+				selectNameArr = [];
+				selectedNameArr = [];
+				initClickHeightLight();
+				initSelectedClickHeightLight();
+				init_selectpicker();
+				$('.normal-content').show().siblings().hide();
+			});
+			//转台
+			$('.btn-zhuantai').on('click', function(){
+				init_selectpicker();
+				$('.zhuantai-content').show().siblings().hide();
+				$('.btn-submit').attr('disabled', false);
+				$('#dingtai [name="to_site_name"]').attr('disabled', false);
+				$('#dingtai [name="site_name"]').attr('disabled', false);
+				initZhuantaiSelect();
+			});
+
+			//转台选择项
+			function initZhuantaiSelect()
+			{
+				var options = '<option value="">请选择台号</option>';
+				$('area:not(.selected)').each(function(){
+					var name = $(this).attr('data-site_name');
+					if ($.inArray(name, exceptForSelect) < 0) {
+						options+= '<option value="'+name+'">'+name+'</option>'
+					}
+				});
+				$('select[name="to_site_name"]').html(options).selectpicker('refresh');
+			}
+			//提交事件
+			$('.btn-submit').on('click', function(){
+				var check = true;
+				// $('#dingtai form .normal-content input[type="text"]:not([readonly="readonly"])').each(function(){
+				// 	if (this.value === '') {
+				// 		check = false;
+				// 		$(this).focus();
+				// 		syalerttips($(this).prev().text()+'不能为空');
+				// 		return false;
+				// 	}
+				// });
+				if ($('#dingtai .zhuantai-content').is(':visible')) {
+					if ($('#dingtai .zhuantai-content [name="to_site_name"]').val() == '') {
+						syalerttips('转台不能为空');
+						check = false;
+						return false;
+					}
+				}
+				if ($('#dingtai .biaoji-content').is(':visible')) {
+					if (!$('#dingtai .biaoji-content [name="status"]').val()) {
+						syalerttips('请选择标记');
+						check = false;
+						return false;
+					}
+				}
+				if (!check) {
+					return false;
+				}
+
+				// var data1 = $(this).parent().parent().find('form').serializeArray();
+				// console.log(data1);
+				//提交接口
+				// var data2 = {
+				// 	"site_name":data1[0].value,
+				// 	"customer_name":"",
+				// 	"customer_phone",
+				// };
+				var data = $(this).parent().parent().find('form').serialize();
+				data = formatData(data);
+				// console.log("&to_site_name="+$("#to_site_name").selectpicker('val')+"&"+data.toString());
+				if (hasValidate === false) {
+					layer.prompt({
+						formType:1,
+						title: '请输入密码',
+					}, function(val, index){
+						var dataPwd = {"pwd":$.md5(val)};
+						$.sdpost("/login",JSON.stringify(dataPwd), function (re) {
+							if (re.code === 200) {
+								layer.close(index)
+								hasValidate = true
+								$.sdpost("/order",data, function (re) {
+									if (re.code === 200) {
+										layer.msg(re.msg)
+										// initSelected(data1);
+										setInterval(function () {
+											window.location.href = "/"
+										},1000)
+									}else {
+										layer.alert(re.msg, {icon: 2, title: "失败"});
+									}
+								});
+								return false;
+							}else {
+								layer.alert(re.msg, {icon: 2, title: "失败"});
+								return false;
+							}
+						});
+					})
+				}else{
+					$.sdpost("/order",data, function (re) {
+						if (re.code === 200) {
+							layer.msg(re.msg)
+							// initSelected(data1);
+							setInterval(function () {
+								window.location.href = "/"
+							},1000)
+
+						}else {
+							layer.alert(re.msg, {icon: 2, title: "失败"});
+						}
+					});
+				}
+
+			});
+			function formatData(data) {
+				data = data.split('&');
+				var tempData = {};
+				for (var i in data) {
+					var temp = data[i].split('=');
+					console.log(temp)
+					if (temp[0] == 'site_name') {
+						tempData[temp[0]] = temp[1];
+					} else {
+						if (!tempData[temp[0]]) {
+							tempData[temp[0]] = '';
+						}
+						tempData[temp[0]] += temp[1]+',';
+					}
+				}
+				//返回字符串
+				var str = '';
+				count = 0;
+				for (var i in tempData) {
+					if (count > 0) {
+						str += '&';
+					}
+					count ++;
+					if (i == 'site_name') {
+						str += i+'='+tempData[i];
+					} else {
+						str += i+'='+tempData[i].substring(0, tempData[i].length - 1);
+					}
+				}
+				return str;
+			}
+            //取消
+			$('.btn-cancel').on('click', function(){
+				//接口
+				init_selectpicker();
+				// var data = clickobj.data();
+				var data = selectCancelArr;
+
+				// var jsonStr = {"site_name":data.site_name.toString()}
+				var jsonStr = {"site_name":data.join(",")}
+				if (hasValidate === false) {
+					layer.prompt({
+						formType:1,
+						title: '请输入密码',
+					}, function(val, index){
+						var dataPwd = {"pwd":$.md5(val)};
+						$.sdpost("/login",JSON.stringify(dataPwd), function (re) {
+							if (re.code === 200) {
+								layer.close(index)
+								layer.msg(re.msg)
+								hasValidate = true
+								$.sdpost("/cancel",JSON.stringify(jsonStr), function (re) {
+									if (re.code === 200) {
+										layer.msg(re.msg)
+										// cancelSelected(jsonStr)
+										setInterval(function () {
+											window.location.href = "/"
+										},1000)
+									}else {
+										layer.alert(re.msg, {icon: 2, title: "失败"});
+									}
+								});
+								return false;
+							}else {
+								layer.alert(re.msg, {icon: 2, title: "失败"});
+							}
+						});
+					})
+				}else{
+					$.sdpost("/cancel",JSON.stringify(jsonStr), function (re) {
+						console.log(re)
+						if (re.code === 200) {
+							layer.msg(re.msg)
+							// cancelSelected(jsonStr)
+							setInterval(function () {
+								window.location.href = "/"
+							},1000)
+						}else {
+							layer.alert(re.msg, {icon: 2, title: "失败"});
+						}
+					});
+				}
+
+			});
+			//标记按钮点击事件
+			$('.btn-biaoji').on('click', function(){
+				init_selectpicker();
+				$('.biaoji-content').show().siblings().hide();
+			});
+			$('.biaoji-content li, .biaoji-content li a').on('click', function(){
+				$(this).siblings().removeClass('active');
+			});
+			//
+			function init_selectpicker()
+			{
+				$('#dingtai .selectpicker').each(function(){
+					$(this).val($(this).find('option').eq(0).attr('value')).selectpicker('refresh');
+				});
+			}
+
+			//初始化地图
+			function initMap() {
+				var nowimgw = imgobj.width;
+				rate = nowimgw / imgw;
+				var html = '';
+				for (var i in siteParma) {
+					var datastr = '';
+					var selected = '';
+					if (siteSelected[siteParma[i].name]) {
+						selected = 'selected';
+						var data = siteSelected[siteParma[i].name];
+					} else {
+						var data = {site_name: siteParma[i].name, customer_name: '', customer_phone: '', reserve_name: '', remark: ''};
+					}
+					for (var j in data) {
+						datastr += ' data-'+j+'="'+data[j]+'"';
+					}
+					html += '<area class="'+selected+'" shape="'+siteParma[i].type+'" coords="'+getRateCoord(siteParma[i].site, rate)+'" href="javascript:;" title="'+siteParma[i].name+'" '+datastr+' />'
+				}
+				mapobj.innerHTML = html;
+			}
+			//获取比例坐标
+			function getRateCoord(coord, rate) {
+				var coordstr = '';
+				var coord = coord.split(',');
+				for (var j = 0; j < coord.length; j++) {
+					if (j === 0) {
+						coordstr = coord[j]*rate;
+					} else {
+						coordstr += ',' + coord[j]*rate;
+					}
+				}
+				return coordstr;
+			}
+			//初始化弹窗
+			function initAlert(obj, data, selected) {
+				var formobj = $('#dingtai form');
+				formobj.find('input, select').attr('value', '');
+				formobj.find('input').each(function(){
+					var name = this.name;
+					var text = typeof data[name] === 'undefind' ? '' : data[name];
+					$(this).attr('value', text);
+					if (hasValidate === false) {
+						$(this).attr('disabled', selected);
+					}
+				});
+				if (hasValidate === false) {
+					$('#dingtai .btn-submit').attr('disabled', selected);
+				}
+				syalert.syopen('dingtai');
+			}
+			//弹窗提示
+			function syalerttips(text) {
+				$('.sy-alert-tips').remove();
+		        $('body').append('<div class="sy-alert sy-alert-tips animated" sy-enter="zoomIn" sy-leave="zoomOut" sy-type="tips" sy-mask="false" id="sy-alert-tips"> <div class="sy-content">' + text + '</div> </div>');
+		        syalert.syopen('sy-alert-tips');
+			}
+			//初始化选中
+			function initSelected(data)
+			{
+				/*要求格式 {
+					site_name: 'xxx, xxx',
+					status: d,
+					...
+				}*/
+				$('#map area:not(.selected)').data('maphilight', {}).trigger('alwaysOn.maphilight');
+				var tempArr = data.site_name.split(',');
+				for (var i in tempArr) {
+					var obj = $('#map area[data-site_name="'+tempArr[i]+'"]');
+					obj.data('site_name', tempArr[i]);
+					if(color[data.status] === 'undefined') {
+						var heightlinedata = color[data.status];
+					} else {
+						var className = siteParma[tempArr[i]].class;
+						var heightlinedata = color[className];
+					}
+					$('#map area[data-site_name="'+tempArr[i]+'"]').addClass('selected').data('maphilight', heightlinedata).trigger('alwaysOn.maphilight');
+					for (var j in data) {
+						if (j !== 'site_name') {
+							obj.data(j, data[j]);
+						}
+					}
+				}
+				$('.sy-alert.sy-alert-model').hide();
+			}
+
+			//初始化未选中
+			function cancelSelected(nameArr) {
+				nameArr = nameArr.split(',');
+				var data = {
+					customer_name: '',
+					customer_phone: '',
+					reserve_name: '',
+					remark: '',
+				};
+				for (var n in nameArr) {
+					var obj = $('#map area[data-site_name="'+nameArr[n]+'"]');
+					for (var i in data) {
+						obj.data(i, data[i]);
+					}
+					obj.data('maphilight', {}).trigger('alwaysOn.maphilight');
+				}
+				$('.sy-alert.sy-alert-model').hide();
+				return true;
+			}
+
+		});
+		//描点打印坐标
+		document.addEventListener('click', function (e) {
+	        console.log(e.clientX, 'x')
+	        console.log(e.clientY, 'y')
+	    });
+	</script>
+</body>
+</html>
